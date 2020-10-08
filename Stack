@@ -1,0 +1,73 @@
+#include <iostream>
+
+using namespace std;
+
+struct stack {
+    char c;
+    stack* next;
+};
+
+int prior(char a) {
+    switch (a) {
+        case '*': case '/': return 3;
+        case '-': case '+': return 2;
+        case '(': return 1;
+    }
+    return 0;
+}
+
+stack* ins(stack* p, char s) {
+    stack* t = new stack;
+    t->c = s;
+    t->next = p;
+    return t;
+}
+
+stack* outs(stack* p, char* s) {
+    stack* t = p;
+    *s = p->c;
+    p = p->next;
+    delete t;
+    return p;
+}
+
+void main()
+{
+    stack* t;
+    stack *op = NULL;
+    char a, in[81], out[81];
+    int k = 0, l = 0;
+    cout << "Input formula: ";
+    cin >> in;
+    while (in[k] != '\0') {
+        if (in[k] >= '0' && in[k] <= '9')
+            out[l++] = in[k];
+        if (in[k] == '(')
+            op = ins(op, in[k]);
+        if (in[k] == ')') {
+            while ((op->c) != '(') {
+                op = outs(op, &a);
+                if (!op)a = '\0';
+                out[l++] = a;
+            }
+            t = op;
+            op = op->next;
+            delete t;
+        }
+        if (in[k] == '+' || in[k] == '-' || in[k] == '*' || in[k] == '/') {
+            while (op != NULL && prior(op->c) >= prior(in[k])) {
+                op = outs(op, &a);
+                out[l++] = a;
+            }
+            op = ins(op, in[k]);
+        }
+        k++;
+    }
+    while (op != NULL) {
+        op = outs(op, &a);
+        out[l++] = a;
+    }
+    out[l] = '\0';
+    cout << "\n Polish= " << out;
+    system("pause");
+}
