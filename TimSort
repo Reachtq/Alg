@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef struct {
+    int begin;
+    int length;
+}partvect;
+
+
+int getminrun(int n) {
+    int flag = 0;
+    while (n >= 64) {
+        n >>= 1;
+        flag |= n & 1;
+    }
+    return n + flag;
+}
+
+
+void Sort(vector<int>& vect, int begin, int end) {
+    for (int i = begin; i < end; ++i) {
+
+        int min_pos = i;
+        for (int j = i + 1; j < end; ++j) {
+            if (vect[j] < vect[min_pos])
+                min_pos = j;
+        }
+        swap(vect[i], vect[min_pos]);
+    }
+}
+
+
+void merge(vector<int>& vect, int fb, int fl, int sb, int sl) {
+    int n = vect.size();
+    vector<int>tmp(n);
+    memcpy(&tmp, &vect[fb], sizeof(int) * (fl));
+    int f_i = 0, s_i = 0, i=fb;
+    while (i < sb+sl-1) {
+        if (tmp[f_i] < vect[s_i]) {
+            vect[i] = tmp[f_i];
+            ++f_i; 
+            s_i = min(f_i, fl);
+        }
+        else if (vect[s_i] <= tmp[f_i]){
+            vect[i] = vect[s_i];
+            ++s_i;
+            s_i = min(s_i, sb + sl);
+        }
+        if (s_i == sb + sl){
+            if (f_i != fl)
+            {
+                memcpy(&vect[i + 1], &tmp[f_i], sizeof(int) * (fl - f_i));
+                i = sb + sl;
+            }
+        }
+        if (f_i == fl){
+            i = sb + sl;
+        }
+        ++i;
+    }
+}
+
+
+void timSort(vector<int>& vect){
+    int n = vect.size();
+    int minrun = getminrun(n);
+    int run = minrun;
+    vector<partvect> part;
+    part.reserve((n - 1) / minrun + 1);
+    for (int i = 0; i < n; i += minrun) {
+        run = min(minrun, n - i);
+        Sort(vect, i, i + run);
+        partvect p;
+        p.begin = i;
+        p.length = run;
+        part.push_back(p);
+    }
+    while (part.size() > 1) {
+        partvect x = part.at(0);
+        part.erase(part.begin());
+        partvect y = part.at(0);
+        part.erase(part.begin());
+        if (x.begin > y.begin)
+        {
+            swap(x.begin, y.begin);
+            swap(x.length, y.length);
+        }
+        if (y.begin != x.begin + x.begin)
+        {
+            part.push_back(y);
+            part.push_back(x);
+            continue;
+        }
+        merge(vect, x.begin, x.length, y.begin, y.length);
+        x.length = x.length + y.length;
+        part.push_back(x);
+    }
+}
+
+void printvector (vector<int>& vect){
+    cout << "Timsort: ";
+    for (vector<int>::iterator it = vect.begin(); it != vect.end(); ++it) {
+        cout << *it;
+        cout << " ";
+    }
+}
+
+
+int main(){
+    vector<int> testVector = { 1, 5, 2, 5, 7, 1, -1, 0, 0, 6, 2, 13, 6, 2, 6, 2, 3, 6, 34, 234, 234, 45, 63, 46, 345, 32, 5432, 34, 5, 4, 32, 53, 24, 6736, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    timSort(testVector);
+    printvector(testVector);
+    return 0;
+}
