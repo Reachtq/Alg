@@ -39,7 +39,7 @@ void merge(vector<int>& vect, int fb, int fl, int sb, int sl) {
     while (i < sb+sl-1) {
         if (tmp[f_i] < vect[s_i]) {
             vect[i] = tmp[f_i];
-            ++f_i; 
+            ++f_i;
             s_i = min(f_i, fl);
         }
         else if (vect[s_i] <= tmp[f_i]){
@@ -109,7 +109,22 @@ void printvector (vector<int>& vect){
 
 int main(){
     vector<int> testVector = { 1, 5, 2, 5, 7, 1, -1, 0, 0, 6, 2, 13, 6, 2, 6, 2, 3, 6, 34, 234, 234, 45, 63, 46, 345, 32, 5432, 34, 5, 4, 32, 53, 24, 6736, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    vector<int> copy(testVector);
+
+    srand(time(NULL));
+    for (int i = 0; i < (1<<15); ++i) {
+        testVector.push_back(rand() % 5000);
+    }
+
     timSort(testVector);
-    printvector(testVector);
+    sort(copy.begin(), copy.end());
+
+    for (int i = 0; i < copy.size(); ++i) {
+        if (testVector[i]!= copy[i])
+            cout<<'-';
+    }
+
+    cout<<"\nend\n";
+    //printvector(testVector);
     return 0;
 }
