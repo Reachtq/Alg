@@ -7,20 +7,25 @@ typedef struct {
     int length;
 }partvect;
 
+void printvector(vector<int>& vect) {
+    cout << "Timsort: ";
+    for (vector<int>::iterator it = vect.begin(); it != vect.end(); ++it) {
+        cout << *it;
+        cout << " ";
+    }
+}
 
-int getminrun(int n) {
-    int flag = 0;
+size_t getminrun(size_t n) {
+    size_t flag = 0;
     while (n >= 64) {
-        n >>= 1;
         flag |= n & 1;
+        n >>= 1;
     }
     return n + flag;
 }
 
-
 void Sort(vector<int>& vect, int begin, int end) {
     for (int i = begin; i < end; ++i) {
-
         int min_pos = i;
         for (int j = i + 1; j < end; ++j) {
             if (vect[j] < vect[min_pos])
@@ -31,85 +36,106 @@ void Sort(vector<int>& vect, int begin, int end) {
 }
 
 
-void merge(vector<int>& vect, int fb, int fl, int sb, int sl) {
-    int n = vect.size();
-    vector<int>tmp(n);
-    memcpy(&tmp, &vect[fb], sizeof(int) * (fl));
-    int f_i = 0, s_i = 0, i=fb;
-    while (i < sb+sl-1) {
-        if (tmp[f_i] < vect[s_i]) {
-            vect[i] = tmp[f_i];
-            ++f_i; 
-            s_i = min(f_i, fl);
+void merge(vector<int>& v, pair<size_t, size_t>& p1, pair<size_t, size_t>& p2) {
+    vector<int> tmp;
+    size_t pos1 = 0;
+    size_t pos2 = 0;
+    while (pos1 < p1.second && pos2 < p2.second) {
+        if (v[p1.first + pos1] < v[p2.first + pos2]) {
+            tmp.push_back(v[p1.first + pos1]);
+            ++pos1;
         }
-        else if (vect[s_i] <= tmp[f_i]){
-            vect[i] = vect[s_i];
-            ++s_i;
-            s_i = min(s_i, sb + sl);
+        else {
+            tmp.push_back(v[p2.first + pos2]);
+            ++pos2;
         }
-        if (s_i == sb + sl){
-            if (f_i != fl)
-            {
-                memcpy(&vect[i + 1], &tmp[f_i], sizeof(int) * (fl - f_i));
-                i = sb + sl;
+    }
+    if (pos1 == p1.second) {
+        tmp.insert(end(tmp), begin(v) + p2.first + pos2, begin(v) + p2.first + p2.second);
+    }
+    else {
+        tmp.insert(end(tmp), begin(v) + p1.first + pos1, begin(v) + p1.first + p1.second);
+    }
+    v.erase(begin(v) + p1.first, begin(v) + p2.first + p2.second);
+    v.insert(begin(v) + p1.first, begin(tmp), end(tmp));
+}
+
+void timsort(vector<int>& v) {
+    vector<pair<size_t, size_t>> vp;
+    size_t n = v.size();
+    size_t minrun = getminrun(n);
+    size_t pos = 0;
+    if (n > 1) {
+        while (pos < n) {
+            size_t new_pos = pos;
+            bool order = v[pos] <= v[pos + 1];
+            while ((v[new_pos] <= v[new_pos + 1] && order || v[new_pos] > v[new_pos + 1] && !order) && new_pos + 2 != n) {
+                ++new_pos;
+            }
+            if (!order) {
+                for (size_t i = pos; i < new_pos / 2; ++i) {
+                    swap(v[i], v[new_pos - 1 - i]);
+                }
+            }
+            if (new_pos - pos + 1 < minrun) {
+                new_pos += minrun - (new_pos - pos);
+                if (new_pos < v.size()) {
+                    Sort(v, pos, new_pos);
+                }
+                else {
+                    new_pos = v.size();
+                    Sort(v, pos, new_pos);
+                }
+            }
+            vp.insert(begin(vp), { pos, new_pos - pos });
+            pos = new_pos;
+        }
+        if (vp.size() > 2) {
+            while (!(vp[2].second > vp[0].second + vp[1].second && vp[1].second > vp[0].second)) {
+                if (vp.size() >= 2 && vp[1].second <= vp[0].second) {
+                    merge(v, vp[1], vp[0]);
+                    vp[1].second += vp[0].second;
+                    vp.erase(begin(vp));
+                }
+                if (vp.size() >= 3 && vp[2].second <= vp[0].second + vp[1].second) {
+                    if (vp[0].second < vp[2].second) {
+                        merge(v, vp[1], vp[0]);
+                        vp[1].second += vp[0].second;
+                        vp.erase(begin(vp));
+                    }
+                    else {
+                        merge(v, vp[2], vp[1]);
+                        vp[2].second += vp[1].second;
+                        vp.erase(begin(vp) + 1);
+                    }
+                }
+                if (vp.size() < 3) {
+                    break;
+                }
             }
         }
-        if (f_i == fl){
-            i = sb + sl;
+        if (vp.size() == 2) {
+            merge(v, vp[1], vp[0]);
+            vp[1].second += vp[0].second;
+            vp.erase(begin(vp));
         }
-        ++i;
     }
 }
 
-
-void timSort(vector<int>& vect){
-    int n = vect.size();
-    int minrun = getminrun(n);
-    int run = minrun;
-    vector<partvect> part;
-    part.reserve((n - 1) / minrun + 1);
-    for (int i = 0; i < n; i += minrun) {
-        run = min(minrun, n - i);
-        Sort(vect, i, i + run);
-        partvect p;
-        p.begin = i;
-        p.length = run;
-        part.push_back(p);
+int main() {
+    srand(time(NULL));
+    //vector<int> testVector = { 1, 5, 2, 5, 7, 1, -1, 0, 0, 6, 2, 13, 6, 2, 6, 2, 3, 6, 34, 234, 234, 45, 63, 46, 345, 32, 5432, 34, 5, 4, 32, 53, 24, 6736, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+    vector<int> testVector;
+    for (unsigned int i = 0; i < (1<<15); ++i) {
+        testVector.push_back(rand() % 5000);
     }
-    while (part.size() > 1) {
-        partvect x = part.at(0);
-        part.erase(part.begin());
-        partvect y = part.at(0);
-        part.erase(part.begin());
-        if (x.begin > y.begin)
-        {
-            swap(x.begin, y.begin);
-            swap(x.length, y.length);
-        }
-        if (y.begin != x.begin + x.begin)
-        {
-            part.push_back(y);
-            part.push_back(x);
-            continue;
-        }
-        merge(vect, x.begin, x.length, y.begin, y.length);
-        x.length = x.length + y.length;
-        part.push_back(x);
+    vector<int> copy(testVector);
+    timsort(testVector);
+    sort(copy.begin(), copy.end());
+    for (unsigned int i = 0; i < copy.size(); ++i) {
+        if (testVector[i] != copy[i])
+            cout << '-';
     }
-}
-
-void printvector (vector<int>& vect){
-    cout << "Timsort: ";
-    for (vector<int>::iterator it = vect.begin(); it != vect.end(); ++it) {
-        cout << *it;
-        cout << " ";
-    }
-}
-
-
-int main(){
-    vector<int> testVector = { 1, 5, 2, 5, 7, 1, -1, 0, 0, 6, 2, 13, 6, 2, 6, 2, 3, 6, 34, 234, 234, 45, 63, 46, 345, 32, 5432, 34, 5, 4, 32, 53, 24, 6736, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
-    timSort(testVector);
-    printvector(testVector);
+    cout << "\nend\n";
     return 0;
 }
