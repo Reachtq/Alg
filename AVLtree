@@ -1,0 +1,251 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef struct node
+{
+	int element;
+	node* left;
+	node* right;
+	int height;
+}* tree;
+
+class avltree
+{
+public:
+	void insert(int, tree&);
+	void find(int, tree&);
+	void del(int, tree&);
+	int treeh(tree);
+	tree sleft(tree&);
+	tree dleft(tree&);
+	tree sright(tree&);
+	tree dright(tree&);
+	int max(int, int);
+};
+
+void avltree::insert(int x, tree& p)
+{
+	if (p == NULL)
+	{
+		p = new node;
+		p->element = x;
+		p->left = NULL;
+		p->right = NULL;
+		p->height = 0;
+		if (p == NULL)
+		{
+			cout << "Outside of Space\n" << endl;
+		}
+	}
+	else
+	{
+		if (x < p->element)
+		{
+			insert(x, p->left);
+			if ((treeh(p->left) - treeh(p->right)) == 2)
+			{
+				if (x < p->left->element)
+				{
+					p = sleft(p);
+				}
+				else
+				{
+					p = dleft(p);
+				}
+			}
+		}
+		else if (x > p->element)
+		{
+			insert(x, p->right);
+			if ((treeh(p->right) - treeh(p->left)) == 2)
+			{
+				if (x > p->right->element)
+				{
+					p = sright(p);
+				}
+				else
+				{
+					p = dright(p);
+				}
+			}
+		}
+		else
+		{
+			cout << "False\n" << endl;
+		}
+	}
+	int m, n, d;
+	m = treeh(p->left);
+	n = treeh(p->right);
+	d = max(m, n);
+	p->height = d + 1;
+}
+
+void avltree::find(int x, tree& p)
+{
+	if (p == NULL)
+	{
+		cout << "False\n" << endl;
+	}
+	else
+	{
+		if (x < p->element)
+		{
+			find(x, p->left);
+		}
+		else
+		{
+			if (x > p->element)
+			{
+				find(x, p->right);
+			}
+			else
+			{
+				cout << "True\n" << endl;
+			}
+		}
+	}
+}
+
+void avltree::del(int x, tree& p)
+{
+	tree d;
+	if (p == NULL)
+	{
+		cout << "False\n" << endl;
+	}
+	else if (x < p->element)
+	{
+		del(x, p->left);
+	}
+	else if (x > p->element)
+	{
+		del(x, p->right);
+	}
+	else if ((p->left == NULL) && (p->right == NULL))
+	{
+		d = p;
+		free(d);
+		p = NULL;
+		cout << "True\n" << endl;
+	}
+	else if (p->left == NULL)
+	{
+		d = p;
+		free(d);
+		p = p->right;
+		cout << "True\n" << endl;
+	}
+	else if (p->right == NULL)
+	{
+		d = p;
+		p = p->left;
+		free(d);
+		cout << "True\n" << endl;
+	}
+}
+
+int avltree::treeh(tree p)
+{
+	int t;
+	if (p == NULL)
+	{
+		return -1;
+	}
+	else
+	{
+		t = p->height;
+		return t;
+	}
+}
+
+tree avltree::sleft(tree& p1)
+{
+	tree p2;
+	p2 = p1->left;
+	p1->left = p2->right;
+	p2->right = p1;
+	p1->height = max(treeh(p1->left), treeh(p1->right)) + 1;
+	p2->height = max(treeh(p2->left), p1->height) + 1;
+	return p2;
+}
+
+tree avltree::sright(tree& p1)
+{
+	tree p2;
+	p2 = p1->right;
+	p1->right = p2->left;
+	p2->left = p1;
+	p1->height = max(treeh(p1->left), treeh(p1->right)) + 1;
+	p2->height = max(p1->height, treeh(p2->right)) + 1;
+	return p2;
+}
+
+tree avltree::dleft(tree& p1)
+{
+	p1->left = sright(p1->left);
+	return sleft(p1);
+}
+
+tree avltree::dright(tree& p1)
+{
+	p1->right = sleft(p1->right);
+	return sright(p1);
+}
+
+int avltree::max(int value1, int value2)
+{
+	return ((value1 > value2) ? value1 : value2);
+}
+
+
+int main()
+{
+	tree flag = NULL;
+	int a, choice, findele, delele;
+	avltree avlt;
+	cout << "\n\t\t\tMenu\n" << endl;
+
+	do
+	{
+		cout << "\tEnter 1 to insert a new node" << endl;
+		cout << "\tEnter 2 to search a value" << endl;
+		cout << "\tEnter 3 to delete a value" << endl;
+		cout << "\tEnter 0 to exit" << endl;
+		cout << "\n\nEnter the choice: ";
+		cin >> choice;
+
+		switch (choice)
+		{
+		case 1:
+			cout << "\nEnter a new value: ";
+			cin >> a;
+			avlt.insert(a, flag);
+			cout << "\nTrue\n" << endl;
+			break;
+		case 2:
+			cout << "\nEnter value to search: ";
+			cin >> findele;
+			if (flag != NULL)
+			{
+				avlt.find(findele, flag);
+			}
+			break;
+		case 3:
+			cout << "\nEnter value to delete: ";
+			cin >> delele;
+			avlt.del(delele, flag);
+			cout << endl;
+			break;
+		case 0:
+			break;
+		default:
+			cout << "Sorry! wrong input\n" << endl;
+			break;
+		}
+		system("pause");
+		system("cls");
+	} while (choice != 0);
+	return 0;
+}
