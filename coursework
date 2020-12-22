@@ -1,0 +1,224 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+
+using namespace std;
+
+class Edge
+{
+private:
+	char Ftop, Stop;
+	int FTcolor, STcolor;
+	int dist;
+public:
+	Edge() : dist(0), FTcolor(0), STcolor(0), Ftop(), Stop() {}
+
+	void SetDist(int dist) {
+		this->dist = dist;
+	}
+	void SetFtop(char Ftop) {
+		this->Ftop = Ftop;
+	}
+	void SetStop(char Stop) {
+		this->Stop = Stop;
+	}
+	void SetFTcolor(int FTcolor) {
+		this->FTcolor = FTcolor;
+	}
+	void SetSTcolor(int STcolor) {
+		this->STcolor = STcolor;
+	}
+	int GetDist() const {
+		return dist;
+	}
+	char GetFtop() const {
+		return Ftop;
+	}
+	char GetStop() const {
+		return Stop;
+	}
+	int GetFTcolor() const {
+		return FTcolor;
+	}
+	int GetSTcolor() const {
+		return STcolor;
+	}
+};
+
+class Graph
+{
+private:
+
+	vector<Edge> edges;
+	vector<Edge> mintree;
+	vector<char> collection;
+
+	int TopColor(char sym);
+	int max(int a, int b);
+	int min(int a, int b);
+	bool CheckSym(char sym);
+	bool SetCollection(char sym);
+	void quickSort(vector<Edge>& arr, int first, int last);
+
+public:
+	Graph() : edges(0), mintree(0) {}
+	void InputGraph();
+	void QuickSort();
+	void AlgKruskala();
+	void Result();
+};
+
+
+void Graph::InputGraph() {
+	ifstream file;
+	file.open("graph.txt");
+	char getA, getB;
+	int getW;
+	if (!file.is_open())
+	{
+		cout << "Error! The file was not found.";
+	}
+	else {
+		while (!file.eof()) {
+			file >> getA >> getB >> getW;
+			if (CheckSym(getA)) {
+				if (CheckSym(getB)) {
+					if (!CheckSym(getW)) {
+						if (0 <= getW && getW <= 1023) {
+							Edge temporay;
+							temporay.SetFtop(getA);
+							temporay.SetStop(getB);
+							temporay.SetFTcolor(TopColor(getA));
+							temporay.SetSTcolor(TopColor(getB));
+							temporay.SetDist(getW);
+							edges.push_back(temporay);
+							if (!SetCollection(temporay.GetFtop())) {
+								collection.push_back(temporay.GetFtop());
+							}
+							if (!SetCollection(temporay.GetStop())) {
+								collection.push_back(temporay.GetStop());
+							}
+							if (edges.size() > 1225) {
+								cout << "Error!" << endl;
+								throw;
+							}
+							if (collection.size() > 50) {
+								cout << "Error!" << endl;
+								throw;
+							}
+						}
+						else {
+							cout << "Error!" << endl;
+							throw;
+						}
+					}
+				}
+			}
+		}
+		file.close();
+	}
+}
+
+bool Graph::SetCollection(char sym) {
+	for (int i = 0; i < collection.size(); i++) {
+		if (collection[i] == sym || collection[i] == sym) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Graph::CheckSym(char sym) {
+	return (sym >= 'A' && sym <= 'Z') || (sym >= 'a' && sym <= 'z');
+}
+
+int Graph::TopColor(char sym) {
+	int color;
+	color = (int)sym;
+	return color;
+}
+
+void Graph::QuickSort() {
+	quickSort(edges, 0, edges.size() - 1);
+}
+
+void Graph::quickSort(vector<Edge>& arr, int first, int last) {
+	if (first < last)
+	{
+		int left = first, right = last;
+		Edge middle = arr[(left + right) / 2];
+		do
+		{
+			while (arr[left].GetDist() < middle.GetDist()) left++;
+			while (arr[right].GetDist() > middle.GetDist()) right--;
+			if (left <= right)
+			{
+				Edge tmp = arr[left];
+				arr[left] = arr[right];
+				arr[right] = tmp;
+				left++;
+				right--;
+			}
+		} while (left <= right);
+		quickSort(arr, first, right);
+		quickSort(arr, left, last);
+	}
+}
+
+int Graph::max(int a, int b) {
+	if (a >= b) {
+		return a;
+	}
+	else {
+		return b;
+	}
+}
+
+int Graph::min(int a, int b) {
+	if (a < b) {
+		return a;
+	}
+	else {
+		return b;
+	}
+}
+
+void Graph::AlgKruskala() {
+	for (int i = 0; i < edges.size(); i++) {
+		if (edges[i].GetFTcolor() != edges[i].GetSTcolor()) {
+			mintree.push_back(edges[i]);
+			int maxcolor = max(edges[i].GetFTcolor(), edges[i].GetSTcolor());
+			int mincolor = min(edges[i].GetFTcolor(), edges[i].GetSTcolor());
+			edges[i].SetFTcolor(maxcolor);
+			edges[i].SetSTcolor(maxcolor);
+			for (int j = 0; j < edges.size(); j++) {
+				if (edges[j].GetFTcolor() == mincolor) {
+					edges[j].SetFTcolor(maxcolor); 
+				}
+				if (edges[j].GetSTcolor() == mincolor) {
+					edges[j].SetSTcolor(maxcolor);
+				}
+			}
+		}
+	}
+}
+
+void Graph::Result(){
+	int sumDist = 0;
+	for (int i = 0; i < mintree.size(); i++)
+	{
+		cout << mintree[i].GetFtop() << " ";
+		cout <<	mintree[i].GetStop() << " \n";
+		sumDist += mintree[i].GetDist();
+	}
+	cout << sumDist;
+}
+
+int main() {
+	Graph graf;
+	graf.InputGraph();
+	graf.QuickSort();
+	graf.AlgKruskala();
+	graf.Result();
+	return 0;
+}
